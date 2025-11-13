@@ -28,7 +28,8 @@ export default function PriceChart({ asset }: PriceChartProps) {
     // In production, this would fetch from the API
     const generateMockData = () => {
       const data: PriceData[] = []
-      const basePrice = asset === 'BTC' ? 45000 : 2500
+      // Base prices for different assets
+      const basePrice = asset === 'BTC' ? 45000 : asset === 'ETH' ? 2500 : asset === 'BNB' ? 350 : 2500
       const now = new Date()
       let previousPrice = basePrice
       
@@ -133,6 +134,12 @@ export default function PriceChart({ asset }: PriceChartProps) {
                 tickFormatter={(value) => {
                   if (asset === 'BTC') {
                     return `$${(value / 1000).toFixed(0)}k`
+                  }
+                  if (asset === 'ETH') {
+                    return `$${value.toFixed(0)}`
+                  }
+                  if (asset === 'BNB') {
+                    return `$${value.toFixed(0)}`
                   }
                   return `$${value.toFixed(0)}`
                 }}
