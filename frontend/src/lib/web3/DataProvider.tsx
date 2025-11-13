@@ -100,18 +100,18 @@ export default function DataProvider({ children }: { children: React.ReactNode }
     Governance: getContractAddress('Governance', chainId),
   }), [chainId])
 
-  // Load ABIs
+  // Load ABIs based on connected chain ID
   const [flowTokenAbi, setFlowTokenAbi] = useState<any[]>([])
   const [stakingAbi, setStakingAbi] = useState<any[]>([])
 
   useEffect(() => {
-    getContractData('FLOWToken', 'hardhat').then((data) => {
+    getContractData('FLOWToken', chainId).then((data) => {
       if (data) setFlowTokenAbi(data.abi)
     })
-    getContractData('CuratorStaking', 'hardhat').then((data) => {
+    getContractData('CuratorStaking', chainId).then((data) => {
       if (data) setStakingAbi(data.abi)
     })
-  }, [])
+  }, [chainId])
 
   // Prepare read contracts for token balance and staking info
   const readContracts = useMemo(() => {
@@ -156,12 +156,13 @@ export default function DataProvider({ children }: { children: React.ReactNode }
 
   // Update token balance
   useEffect(() => {
+    console.log("ReadData", readData);
     if (readData && readData[0]?.status === 'success' && readData[0].result) {
-      setTokenBalance(formatEther(readData[0].result as bigint))
+      setTokenBalance(formatEther(readData[0]?.result[0] as bigint))
     } else {
       setTokenBalance('0')
     }
-  }, [readData])
+  }, [readData]);
 
   // Update staking info
   useEffect(() => {
@@ -180,22 +181,23 @@ export default function DataProvider({ children }: { children: React.ReactNode }
 
   // Get bid function
   const getBid = useCallback(async (whaleAddress: string): Promise<BiddingInfo | null> => {
-    if (!contractAddresses.WhaleAlertBidding || !isConnected) {
+    if (!contractAddresses.WhaleAlertBidding || !isConnected || !whaleAddress) {
       return null
     }
 
     try {
-      const contractData = await getContractData('WhaleAlertBidding', 'hardhat')
+      const contractData = await getContractData('WhaleAlertBidding', chainId)
       if (!contractData) return null
 
-      // This would need to be called via wagmi's useReadContract or useContractRead
-      // For now, return null - will be implemented in transaction components
+      // Use wagmi's useReadContract would require a hook, so we'll use a direct call
+      // For now, return null and let the component handle it via useReadContract
+      // This will be properly implemented in BidTransaction component
       return null
     } catch (error) {
       console.error('Error fetching bid:', error)
       return null
     }
-  }, [contractAddresses.WhaleAlertBidding, isConnected])
+  }, [contractAddresses.WhaleAlertBidding, isConnected, chainId])
 
   // Fetch proposals
   const fetchProposals = useCallback(async () => {

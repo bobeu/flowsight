@@ -7,8 +7,11 @@
 
 import type { Metadata } from 'next'
 import { Inter, Space_Mono } from 'next/font/google'
+import '@rainbow-me/rainbowkit/styles.css'
 import './globals.css'
 import WagmiProvider from '@/lib/web3/WagmiProvider'
+import TransactionProvider from '@/lib/context/TransactionContext'
+import TransactionStatusMonitorWrapper from './TransactionStatusMonitorWrapper'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -35,7 +38,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} ${spaceMono.variable} font-sans bg-midnight-blue text-light-gray`}>
         <WagmiProvider>
-          {children}
+          <TransactionProvider>
+            {children}
+            <TransactionStatusMonitorWrapper />
+          </TransactionProvider>
         </WagmiProvider>
       </body>
     </html>

@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/Badge'
 import * as Tooltip from '@/components/ui/Tooltip'
 import { useContractData } from '@/lib/web3/DataProvider'
 import { useAccount } from 'wagmi'
+import StakeTransaction from '@/components/transactions/StakeTransaction'
 
 interface WalletTag {
   address: string
@@ -36,9 +37,12 @@ export default function CuratorWalletTagging() {
   const [label, setLabel] = useState('')
   const [category, setCategory] = useState<string>('whale')
   const [recentTags, setRecentTags] = useState<WalletTag[]>([])
+  const [stakeAmount, setStakeAmount] = useState('')
 
   const { isConnected } = useAccount()
-  const { stakingInfo } = useContractData()
+  const { stakingInfo, refetchStakingInfo } = useContractData()
+
+  const MIN_STAKE = 10000 // 10,000 FLOW tokens
 
   // Convert stakingInfo to curatorStatus format
   const curatorStatus: CuratorStatus | null = stakingInfo
@@ -61,6 +65,14 @@ export default function CuratorWalletTagging() {
     console.log('Tagging wallet:', { walletAddress, label, category })
   }
 
+  const handleStakeSuccess = () => {
+    setStakeAmount('')
+    // Refetch staking info to update curator status
+    if (refetchStakingInfo) {
+      refetchStakingInfo()
+    }
+  }
+
   if (!curatorStatus?.isCurator) {
     return (
       <div className="bg-midnight-blue/50 border border-electric-cyan/30 rounded-lg p-6">
@@ -74,9 +86,38 @@ export default function CuratorWalletTagging() {
           Curators play a crucial role in creating FlowSight's decentralized data layer. 
           Accurate tags are rewarded, while false or malicious tags result in slashing (5% of staked amount).
         </p>
-        <Button variant="default" asChild>
-          <a href="/flow-token">Stake $FLOW Tokens</a>
-        </Button>
+
+        {!isConnected ? (
+          <div className="bg-midnight-blue/30 rounded-lg p-4 mb-4">
+            <p className="text-light-gray text-sm">
+              Connect your wallet to stake FLOW tokens and become a Curator.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="mb-4">
+              <label className="block text-light-gray mb-2">Stake Amount (FLOW)</label>
+              <input
+                type="number"
+                value={stakeAmount}
+                onChange={(e) => setStakeAmount(e.target.value)}
+                className="w-full bg-midnight-blue border border-electric-cyan/30 rounded px-4 py-2 text-light-gray focus:outline-none focus:border-electric-cyan font-mono"
+                placeholder={`Minimum: ${MIN_STAKE.toLocaleString()}`}
+              />
+              {parseFloat(stakeAmount) > 0 && parseFloat(stakeAmount) < MIN_STAKE && (
+                <p className="text-sentinel-red text-sm mt-1">
+                  Minimum stake is {MIN_STAKE.toLocaleString()} FLOW tokens
+                </p>
+              )}
+            </div>
+
+            <StakeTransaction
+              amount={stakeAmount}
+              minStake={MIN_STAKE}
+              onSuccess={handleStakeSuccess}
+            />
+          </>
+        )}
       </div>
     )
   }

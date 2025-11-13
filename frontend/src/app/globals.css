@@ -92,6 +92,50 @@ body {
   animation: fade-in 0.5s ease-out forwards;
 }
 
+/* Shimmer animation for transaction progress */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+/* Chart glow animation */
+@keyframes chart-glow {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-chart-glow {
+  animation: chart-glow 3s ease-in-out infinite;
+}
+
+/* Smooth fade in for charts */
+@keyframes chart-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.chart-container {
+  animation: chart-fade-in 0.6s ease-out;
+}
+
 /* Chart styles */
 .recharts-wrapper {
   font-family: var(--font-space-mono);
@@ -105,5 +149,178 @@ body {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Chrome, Safari and Opera */
+}
+
+/* RainbowKit Modal Theme Overrides */
+/* Ensure RainbowKit modals match FlowSight's Deep-Sea Surveillance theme */
+/* Using CSS custom properties and selectors to override RainbowKit's default styling */
+
+/* Root RainbowKit container */
+[data-rk] {
+  --rk-modal-background: #0A1931 !important;
+  --rk-modal-text: #F0F0F0 !important;
+  --rk-accent-color: #00FFFF !important;
+  --rk-accent-color-foreground: #0A1931 !important;
+}
+
+/* RainbowKit Modal/Dialog Background */
+[data-rk] [role="dialog"],
+[data-rk] [data-rk] > div[style*="position"],
+[data-rk] div[class*="rk-modal"],
+[data-rk] div[class*="rk-account-modal"] {
+  background-color: #0A1931 !important;
+  background: #0A1931 !important;
+  border-color: #00FFFF !important;
+  color: #F0F0F0 !important;
+}
+
+/* RainbowKit Modal Overlay */
+[data-rk] [role="dialog"]::before,
+[data-rk] [class*="overlay"] {
+  background-color: rgba(10, 25, 49, 0.8) !important;
+  backdrop-filter: blur(4px);
+}
+
+/* RainbowKit Connect Button */
+[data-rk] button[data-testid="rk-connect-button"],
+[data-rk] button[class*="rk-connect-button"] {
+  background-color: #0A1931 !important;
+  color: #00FFFF !important;
+  border: 1px solid #00FFFF !important;
+}
+
+[data-rk] button[data-testid="rk-connect-button"]:hover,
+[data-rk] button[class*="rk-connect-button"]:hover {
+  background-color: rgba(0, 255, 255, 0.1) !important;
+}
+
+/* RainbowKit Account Modal */
+[data-rk] [data-testid="rk-account-modal"],
+[data-rk] [class*="account-modal"],
+[data-rk] [class*="rk-account-modal"] {
+  background-color: #0A1931 !important;
+  color: #F0F0F0 !important;
+  border: 1px solid #00FFFF !important;
+}
+
+/* RainbowKit Chain Selector Modal */
+[data-rk] [data-testid="rk-chain-selector"],
+[data-rk] [class*="chain-selector"],
+[data-rk] [class*="rk-chain-selector"] {
+  background-color: #0A1931 !important;
+  color: #F0F0F0 !important;
+  border: 1px solid #00FFFF !important;
+}
+
+/* RainbowKit Modal Content Areas */
+[data-rk] div[class*="rk-modal-content"],
+[data-rk] div[class*="rk-account-modal-content"] {
+  background-color: #0A1931 !important;
+  color: #F0F0F0 !important;
+}
+
+/* RainbowKit Text Elements */
+[data-rk] p,
+[data-rk] span:not([class*="icon"]),
+[data-rk] div:not([class*="icon"]) {
+  color: #F0F0F0 !important;
+}
+
+/* RainbowKit Buttons */
+[data-rk] button:not([disabled]) {
+  color: #00FFFF !important;
+  border-color: #00FFFF !important;
+  background-color: transparent !important;
+}
+
+[data-rk] button:not([disabled]):hover {
+  background-color: rgba(0, 255, 255, 0.1) !important;
+}
+
+/* RainbowKit Primary Action Buttons */
+[data-rk] button[class*="primary"],
+[data-rk] button[class*="action"] {
+  background-color: #00FFFF !important;
+  color: #0A1931 !important;
+  border-color: #00FFFF !important;
+}
+
+[data-rk] button[class*="primary"]:hover,
+[data-rk] button[class*="action"]:hover {
+  background-color: rgba(0, 255, 255, 0.8) !important;
+}
+
+/* RainbowKit Selected Items */
+[data-rk] [aria-selected="true"],
+[data-rk] [data-selected="true"],
+[data-rk] [class*="selected"] {
+  background-color: rgba(0, 255, 255, 0.2) !important;
+  border-color: #00FFFF !important;
+  color: #00FFFF !important;
+}
+
+/* RainbowKit Menu Items */
+[data-rk] [role="menuitem"],
+[data-rk] [class*="menu-item"] {
+  background-color: #0A1931 !important;
+  color: #F0F0F0 !important;
+}
+
+[data-rk] [role="menuitem"]:hover,
+[data-rk] [class*="menu-item"]:hover {
+  background-color: rgba(0, 255, 255, 0.1) !important;
+}
+
+/* RainbowKit Input Fields */
+[data-rk] input {
+  background-color: #0A1931 !important;
+  border-color: #00FFFF !important;
+  color: #F0F0F0 !important;
+}
+
+[data-rk] input:focus {
+  border-color: #00FFFF !important;
+  outline-color: #00FFFF !important;
+}
+
+/* RainbowKit Close Button */
+[data-rk] button[aria-label*="Close"],
+[data-rk] button[class*="close"] {
+  color: #F0F0F0 !important;
+  background-color: transparent !important;
+}
+
+[data-rk] button[aria-label*="Close"]:hover,
+[data-rk] button[class*="close"]:hover {
+  background-color: rgba(0, 255, 255, 0.1) !important;
+  color: #00FFFF !important;
+}
+
+/* RainbowKit Wallet List Items */
+[data-rk] [class*="wallet-option"],
+[data-rk] [class*="wallet-item"] {
+  background-color: #0A1931 !important;
+  border-color: #00FFFF !important;
+  color: #F0F0F0 !important;
+}
+
+[data-rk] [class*="wallet-option"]:hover,
+[data-rk] [class*="wallet-item"]:hover {
+  background-color: rgba(0, 255, 255, 0.1) !important;
+  border-color: #00FFFF !important;
+}
+
+/* RainbowKit Chain List Items */
+[data-rk] [class*="chain-option"],
+[data-rk] [class*="chain-item"] {
+  background-color: #0A1931 !important;
+  border-color: #00FFFF !important;
+  color: #F0F0F0 !important;
+}
+
+[data-rk] [class*="chain-option"]:hover,
+[data-rk] [class*="chain-item"]:hover {
+  background-color: rgba(0, 255, 255, 0.1) !important;
+  border-color: #00FFFF !important;
 }
 

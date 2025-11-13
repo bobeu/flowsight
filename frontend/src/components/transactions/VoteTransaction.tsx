@@ -7,7 +7,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi'
 import { useContractData } from '@/lib/web3/DataProvider'
 import { getContractData } from '@/lib/contracts/utils'
 import TransactionButton from '@/components/TransactionButton'
@@ -20,14 +20,15 @@ interface VoteTransactionProps {
 
 export default function VoteTransaction({ proposalId, support, onSuccess }: VoteTransactionProps) {
   const { contractAddresses, refetchProposals } = useContractData()
+  const chainId = useChainId()
   const [governanceAbi, setGovernanceAbi] = useState<any[]>([])
 
-  // Load ABI
+  // Load ABI based on connected chain ID
   useEffect(() => {
-    getContractData('Governance', 'hardhat').then((data) => {
+    getContractData('Governance', chainId).then((data) => {
       if (data) setGovernanceAbi(data.abi)
     })
-  }, [])
+  }, [chainId])
 
   const { writeContract, data: hash, isPending } = useWriteContract()
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
@@ -59,6 +60,8 @@ export default function VoteTransaction({ proposalId, support, onSuccess }: Vote
     <TransactionButton
       onClick={handleVote}
       disabled={isPending || isConfirming || governanceAbi.length === 0}
+      transactionType="vote"
+      transactionMessage={`Casting ${support ? 'Yes' : 'No'} vote on proposal ${proposalId}...`}
       onSuccess={() => {
         refetchProposals()
         if (onSuccess) onSuccess()

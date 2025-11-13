@@ -49,6 +49,11 @@ class Settings(BaseSettings):
     ETHERSCAN_API_KEY: str = ""
     BINANCE_API_KEY: str = ""
     BINANCE_SECRET_KEY: str = ""
+    COINBASE_API_KEY: str = ""
+    COINBASE_SECRET_KEY: str = ""
+    THEGRAPH_API_KEY: str = ""  # Optional, free tier doesn't require key
+    ARKHAM_API_KEY: str = ""  # For wallet labeling (optional)
+    NANSEN_API_KEY: str = ""  # Alternative for wallet labeling
     
     # WebSocket
     WS_PORT: int = 8000

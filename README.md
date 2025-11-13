@@ -151,12 +151,12 @@ The native **$FLOW** utility token powers the FlowSight ecosystem:
 
 ### MVP Features
 
-- ✅ Real-time LSP Index calculation for BTC and ETH
-- ✅ Whale Tracker Dashboard with top 10 identified wallets
-- ✅ Real-time Alert Feed via WebSockets
-- ✅ $FLOW ERC-20 token contract
-- ✅ Curator Staking & Slashing contract
-- ✅ Deep Midnight Blue / Electric Cyan UI theme
+- Real-time LSP Index calculation for BTC and ETH
+- Whale Tracker Dashboard with top 10 identified wallets
+- Real-time Alert Feed via WebSockets
+- $FLOW ERC-20 token contract
+- Curator Staking & Slashing contract
+- Deep Midnight Blue / Electric Cyan UI theme
 
 ### Upcoming Features
 

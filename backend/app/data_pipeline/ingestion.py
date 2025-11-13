@@ -7,21 +7,32 @@ This module handles real-time data ingestion from various sources:
 - Price data
 - Whale wallet movements
 
-For MVP, uses mock data. In production, integrates with:
-- The Graph (subgraphs)
-- Dune Analytics API
-- Etherscan/Ethplorer
-- Binance/Coinbase APIs
+For MVP, uses mock data with fallback. In production, integrates with:
+- Glassnode API (SOPR, MVRV, Illiquid Supply, SSR)
+- CryptoQuant API (Exchange Flow, Stablecoin Ratio)
+- Binance/Coinbase APIs (Order Book Depth)
+- The Graph (DEX Liquidity)
+- Etherscan API (Transaction Data)
 """
 
 import asyncio
 import aiohttp
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.models import Transaction, ExchangeFlow, PriceData, WhaleWallet
 from app.core.config import settings
+
+# Import data source clients
+from app.services.data_sources import (
+    GlassnodeClient,
+    CryptoQuantClient,
+    BinanceClient,
+    CoinbaseClient,
+    TheGraphClient,
+    EtherscanClient,
+)
 
 
 class DataIngestionPipeline:
@@ -44,6 +55,14 @@ class DataIngestionPipeline:
         """
         self.db = db
         self.running = False
+        
+        # Initialize data source clients
+        self.glassnode = GlassnodeClient()
+        self.cryptoquant = CryptoQuantClient()
+        self.binance = BinanceClient()
+        self.coinbase = CoinbaseClient()
+        self.thegraph = TheGraphClient()
+        self.etherscan = EtherscanClient()
     
     async def start(self) -> None:
         """Start the data ingestion pipeline"""
@@ -63,6 +82,14 @@ class DataIngestionPipeline:
         """Stop the data ingestion pipeline"""
         self.running = False
         logger.info("🛑 Stopping data ingestion pipeline...")
+        
+        # Close all client sessions
+        await self.glassnode.close()
+        await self.cryptoquant.close()
+        await self.binance.close()
+        await self.coinbase.close()
+        await self.thegraph.close()
+        await self.etherscan.close()
     
     async def _ingest_transactions(self) -> None:
         """
@@ -105,19 +132,40 @@ class DataIngestionPipeline:
         """
         Ingest exchange net flow data
         
-        For MVP, generates mock data. In production, would:
-        - Connect to CryptoQuant/Glassnode APIs
-        - Fetch exchange flow data
-        - Store in database
+        Tries to fetch from CryptoQuant API first, falls back to mock data.
         """
         logger.info("Starting exchange flow ingestion...")
         
         while self.running:
             try:
-                # Mock exchange flow data
-                mock_flows = self._generate_mock_exchange_flows()
+                flows = []
                 
-                for flow_data in mock_flows:
+                # Try to fetch real data from CryptoQuant
+                try:
+                    for asset in ["BTC", "ETH"]:
+                        for exchange in ["Binance", "Coinbase", "Kraken"]:
+                            netflow = await self.cryptoquant.get_exchange_netflow(
+                                asset=asset,
+                                exchange=exchange
+                            )
+                            
+                            if netflow is not None:
+                                flows.append({
+                                    "exchange_name": exchange,
+                                    "asset_symbol": asset,
+                                    "net_flow": netflow,
+                                    "timestamp": datetime.utcnow(),
+                                })
+                except Exception as e:
+                    logger.warning(f"Failed to fetch exchange flows from CryptoQuant: {e}")
+                
+                # Fallback to mock data if no real data available
+                if not flows:
+                    logger.info("Using mock exchange flow data (no API keys or API unavailable)")
+                    flows = self._generate_mock_exchange_flows()
+                
+                # Store flows in database
+                for flow_data in flows:
                     flow = ExchangeFlow(**flow_data)
                     self.db.add(flow)
                 

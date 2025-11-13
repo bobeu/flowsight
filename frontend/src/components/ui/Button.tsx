@@ -17,10 +17,11 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "default", asChild = false, ...props }, ref) => {
+  ({ className, variant = "default", asChild = false, type = "button", ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
     return (
       <Comp
+        type={type}
         className={cn(
           "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-electric-cyan disabled:pointer-events-none disabled:opacity-50 px-6 py-3",
           {

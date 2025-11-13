@@ -17,22 +17,25 @@ import { Badge } from '@/components/ui/Badge'
 import * as Tooltip from '@/components/ui/Tooltip'
 import { Progress } from '@/components/ui/Progress'
 import { useContractData } from '@/lib/web3/DataProvider'
-import { useAccount } from 'wagmi'
+import { useAccount, useReadContract, useChainId } from 'wagmi'
+import { formatEther, zeroAddress } from 'viem'
 import StakeTransaction from '@/components/transactions/StakeTransaction'
 import BidTransaction from '@/components/transactions/BidTransaction'
 import VoteTransaction from '@/components/transactions/VoteTransaction'
+import { getContractData } from '@/lib/contracts/utils'
 
-interface StakingInfo {
-  stakedAmount: string
-  isCurator: boolean
-  totalRewards: string
-  slashCount: number
-}
+// interface StakingInfo {
+//   stakedAmount: string
+//   isCurator: boolean
+//   totalRewards: string
+//   slashCount: number
+// }
 
 interface BiddingInfo {
-  currentBid: string
-  yourBid: string
-  walletAddress: string
+  bidder: string
+  amount: string
+  timestamp: number
+  isActive: boolean
 }
 
 export default function FLOWTokenIntegration() {
@@ -43,14 +46,41 @@ export default function FLOWTokenIntegration() {
   const [biddingInfo, setBiddingInfo] = useState<BiddingInfo | null>(null)
 
   const { isConnected } = useAccount()
-  const { stakingInfo, tokenBalance, getBid, proposals } = useContractData()
+  const chainId = useChainId()
+  const { stakingInfo, contractAddresses, proposals } = useContractData()
+  const [biddingAbi, setBiddingAbi] = useState<any[]>([])
 
-  // Fetch bid info when wallet address changes
+  // Load bidding ABI based on connected chain ID
   useEffect(() => {
-    if (selectedWallet && isConnected) {
-      getBid(selectedWallet).then(setBiddingInfo)
+    getContractData('WhaleAlertBidding', chainId).then((data: { address: string; abi: any[] } | null) => {
+      if (data) setBiddingAbi(data.abi)
+    })
+  }, [chainId])
+
+  // Fetch bid info using useReadContract
+  const { data: bidData } = useReadContract({
+    address: contractAddresses.WhaleAlertBidding as `0x${string}` | undefined,
+    abi: biddingAbi,
+    functionName: 'getHighestBid',
+    args: selectedWallet && selectedWallet.startsWith('0x') ? [selectedWallet as `0x${string}`] : undefined,
+    query: {
+      enabled: !!selectedWallet && selectedWallet.startsWith('0x') && !!contractAddresses.WhaleAlertBidding && biddingAbi.length > 0,
+    },
+  })
+
+  // Update biddingInfo when bidData changes
+  useEffect(() => {
+    if (bidData && Array.isArray(bidData) && bidData.length >= 3) {
+      setBiddingInfo({
+        bidder: bidData[0] as string,
+        amount: formatEther(bidData[1] as bigint),
+        timestamp: Number(bidData[2] as bigint),
+        isActive: bidData[0] !== '0x0000000000000000000000000000000000000000',
+      })
+    } else {
+      setBiddingInfo(null)
     }
-  }, [selectedWallet, isConnected, getBid])
+  }, [bidData])
 
   const handleStakeSuccess = () => {
     setStakeAmount('')
@@ -60,10 +90,7 @@ export default function FLOWTokenIntegration() {
   const handleBidSuccess = () => {
     setBidAmount('')
     setSelectedWallet('')
-    // Refresh bid info
-    if (selectedWallet) {
-      getBid(selectedWallet).then(setBiddingInfo)
-    }
+    // Bid info will be refetched automatically via useReadContract
   }
 
   const MIN_STAKE = 10000 // 10,000 FLOW tokens

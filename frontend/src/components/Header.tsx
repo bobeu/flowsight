@@ -63,9 +63,9 @@ export default function Header() {
                   <Image
                     src="/logo.png"
                     alt="FlowSight Logo"
-                    width={32}
-                    height={32}
-                    className="w-6 h-6 sm:w-8 sm:h-8"
+                    width={64}
+                    height={64}
+                    className="w-12 h-12 sm:w-16 sm:h-16"
                     priority
                   />
                   FlowSight

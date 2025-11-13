@@ -6,12 +6,13 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useAccount } from 'wagmi'
-import { parseEther } from 'viem'
+import { useState, useEffect, useCallback } from 'react'
+import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useAccount, useChainId } from 'wagmi'
+import { parseEther, formatEther } from 'viem'
 import { useContractData } from '@/lib/web3/DataProvider'
 import { getContractData } from '@/lib/contracts/utils'
 import TransactionButton from '@/components/TransactionButton'
+import { parseContractError, formatErrorForDisplay } from '@/lib/utils/errorParser'
 
 interface BidTransactionProps {
   whaleAddress: string
@@ -21,23 +22,25 @@ interface BidTransactionProps {
 
 export default function BidTransaction({ whaleAddress, amount, onSuccess }: BidTransactionProps) {
   const { contractAddresses } = useContractData()
+  const chainId = useChainId()
   const [flowTokenAbi, setFlowTokenAbi] = useState<any[]>([])
   const [biddingAbi, setBiddingAbi] = useState<any[]>([])
-  const [approveHash, setApproveHash] = useState<`0x${string}` | null>(null)
 
-  // Load ABIs
+  // Load ABIs based on connected chain ID
   useEffect(() => {
-    getContractData('FLOWToken', 'hardhat').then((data) => {
+    getContractData('FLOWToken', chainId).then((data) => {
       if (data) setFlowTokenAbi(data.abi)
     })
-    getContractData('WhaleAlertBidding', 'hardhat').then((data) => {
+    getContractData('WhaleAlertBidding', chainId).then((data) => {
       if (data) setBiddingAbi(data.abi)
     })
-  }, [])
+  }, [chainId])
 
-  // Check allowance - need to use useAccount to get the user's address
+  // Get user address
   const { address } = useAccount()
-  const { data: allowance } = useReadContract({
+  
+  // Check allowance
+  const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: contractAddresses.FLOWToken as `0x${string}` | undefined,
     abi: flowTokenAbi,
     functionName: 'allowance',
@@ -52,77 +55,168 @@ export default function BidTransaction({ whaleAddress, amount, onSuccess }: BidT
     },
   })
 
-  const { writeContract: writeApprove, isPending: isApproving } = useWriteContract()
-  const { isLoading: isApprovingConfirming, isSuccess: isApproveSuccess } = useWaitForTransactionReceipt({
-    hash: approveHash || undefined,
+  // Check token balance
+  const { data: balance } = useReadContract({
+    address: contractAddresses.FLOWToken as `0x${string}` | undefined,
+    abi: flowTokenAbi,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!address && !!contractAddresses.FLOWToken && flowTokenAbi.length > 0,
+    },
   })
 
-  const { writeContract: writeBid, data: bidHash, isPending: isBidding } = useWriteContract()
-  const { isLoading: isBiddingConfirming, isSuccess: isBidSuccess } = useWaitForTransactionReceipt({
+  const { writeContractAsync: writeApproveAsync, data: approveHashData, isPending: isApproving, error: approveError } = useWriteContract()
+  const { isLoading: isApprovingConfirming, isSuccess: isApproveSuccess, isError: isApproveError } = useWaitForTransactionReceipt({
+    hash: approveHashData,
+  })
+
+  const { writeContractAsync: writeBidAsync, data: bidHash, isPending: isBidding, error: bidError } = useWriteContract()
+  const { isLoading: isBiddingConfirming, isSuccess: isBidSuccess, isError: isBidError } = useWaitForTransactionReceipt({
     hash: bidHash,
   })
 
   // Auto-bid after approval succeeds
   useEffect(() => {
-    if (isApproveSuccess && contractAddresses.WhaleAlertBidding && biddingAbi.length > 0 && whaleAddress) {
-      const amountWei = parseEther(amount)
-      writeBid({
-        address: contractAddresses.WhaleAlertBidding as `0x${string}`,
-        abi: biddingAbi,
-        functionName: 'placeBid',
-        args: [whaleAddress as `0x${string}`, amountWei],
-      })
+    if (isApproveSuccess && contractAddresses.WhaleAlertBidding && biddingAbi.length > 0 && whaleAddress && amount) {
+      const bid = async () => {
+        try {
+          const amountWei = parseEther(amount)
+          await writeBidAsync({
+            address: contractAddresses.WhaleAlertBidding as `0x${string}`,
+            abi: biddingAbi,
+            functionName: 'placeBid',
+            args: [whaleAddress as `0x${string}`, amountWei],
+          })
+        } catch (error) {
+          console.error('Auto-bid error:', error)
+        }
+      }
+      bid()
     }
-  }, [isApproveSuccess, contractAddresses.WhaleAlertBidding, biddingAbi, whaleAddress, amount, writeBid])
+  }, [isApproveSuccess, contractAddresses.WhaleAlertBidding, biddingAbi, whaleAddress, amount, writeBidAsync])
 
   // Handle bid success
   useEffect(() => {
-    if (isBidSuccess && onSuccess) {
-      onSuccess()
-    }
-  }, [isBidSuccess, onSuccess])
-
-  const handleBid = async () => {
-    if (!contractAddresses.WhaleAlertBidding || !contractAddresses.FLOWToken) {
-      throw new Error('Contracts not loaded')
-    }
-
-    const amountWei = parseEther(amount)
-    const currentAllowance = allowance ? BigInt(allowance.toString()) : 0n
-
-    // Check if approval is needed
-    if (currentAllowance < amountWei) {
-      const approveTxHash = await writeApprove({
-        address: contractAddresses.FLOWToken as `0x${string}`,
-        abi: flowTokenAbi,
-        functionName: 'approve',
-        args: [contractAddresses.WhaleAlertBidding as `0x${string}`, amountWei],
-      })
-      if (approveTxHash) {
-        setApproveHash(approveTxHash)
+    if (isBidSuccess) {
+      refetchAllowance()
+      if (onSuccess) {
+        onSuccess()
       }
-    } else {
-      // Already approved, bid directly
-      writeBid({
-        address: contractAddresses.WhaleAlertBidding as `0x${string}`,
-        abi: biddingAbi,
-        functionName: 'placeBid',
-        args: [whaleAddress as `0x${string}`, amountWei],
-      })
     }
-  }
+  }, [isBidSuccess, onSuccess, refetchAllowance])
+
+  // Handle errors
+  useEffect(() => {
+    if (isApproveError && approveError) {
+      console.error('Approval error:', approveError)
+    }
+    if (isBidError && bidError) {
+      console.error('Bid error:', bidError)
+    }
+  }, [isApproveError, approveError, isBidError, bidError])
+
+  const handleBid = useCallback(async (): Promise<void> => {
+    // Validation
+    if (!contractAddresses.WhaleAlertBidding || !contractAddresses.FLOWToken) {
+      throw new Error('Contracts not loaded. Please ensure contracts are deployed.')
+    }
+
+    if (!address) {
+      throw new Error('Wallet not connected. Please connect your wallet.')
+    }
+
+    if (!whaleAddress || !whaleAddress.startsWith('0x')) {
+      throw new Error('Please enter a valid whale wallet address')
+    }
+
+    if (!amount || parseFloat(amount) <= 0) {
+      throw new Error('Please enter a valid bid amount')
+    }
+
+    if (parseFloat(amount) < 100) {
+      throw new Error('Minimum bid is 100 FLOW tokens')
+    }
+
+    // Check balance
+    if (balance) {
+      const balanceWei = BigInt(balance.toString())
+      const amountWei = parseEther(amount)
+      if (balanceWei < amountWei) {
+        throw new Error('Insufficient FLOW token balance')
+      }
+    }
+
+    try {
+      const amountWei = parseEther(amount)
+      const currentAllowance = allowance ? BigInt(allowance.toString()) : 0n
+
+      // Check if approval is needed
+      if (currentAllowance < amountWei) {
+        // Approve first
+        try {
+          await writeApproveAsync({
+            address: contractAddresses.FLOWToken as `0x${string}`,
+            abi: flowTokenAbi,
+            functionName: 'approve',
+            args: [contractAddresses.WhaleAlertBidding as `0x${string}`, amountWei],
+          })
+          // Approval will trigger auto-bid via useEffect
+        } catch (error) {
+          const parsedError = parseContractError(error)
+          throw new Error(formatErrorForDisplay(parsedError))
+        }
+      } else {
+        // Already approved, bid directly
+        try {
+          await writeBidAsync({
+            address: contractAddresses.WhaleAlertBidding as `0x${string}`,
+            abi: biddingAbi,
+            functionName: 'placeBid',
+            args: [whaleAddress as `0x${string}`, amountWei],
+          })
+        } catch (error) {
+          const parsedError = parseContractError(error)
+          throw new Error(formatErrorForDisplay(parsedError))
+        }
+      }
+    } catch (error) {
+      // Re-throw with parsed error message
+      if (error instanceof Error) {
+        throw error
+      }
+      const parsedError = parseContractError(error)
+      throw new Error(formatErrorForDisplay(parsedError))
+    }
+  }, [
+    contractAddresses,
+    address,
+    whaleAddress,
+    amount,
+    balance,
+    allowance,
+    flowTokenAbi,
+    biddingAbi,
+    writeApproveAsync,
+    writeBidAsync,
+  ])
 
   const isLoading = isApproving || isApprovingConfirming || isBidding || isBiddingConfirming
 
   return (
     <TransactionButton
       onClick={handleBid}
-      disabled={!whaleAddress || !amount || isLoading}
+      disabled={!whaleAddress || !amount || parseFloat(amount) < 100 || isLoading || !contractAddresses.WhaleAlertBidding || !contractAddresses.FLOWToken}
+      transactionType={isApproving ? 'approve' : 'bid'}
+      transactionMessage={isApproving ? 'Approving FLOW tokens for bidding...' : 'Placing bid to boost whale alert...'}
       onSuccess={() => {
+        refetchAllowance()
         if (onSuccess) onSuccess()
       }}
     >
-      {isLoading ? 'Processing...' : 'Place Bid'}
+      {isLoading 
+        ? (isApproving ? 'Approving...' : 'Placing Bid...') 
+        : 'Place Bid'}
     </TransactionButton>
   )
 }

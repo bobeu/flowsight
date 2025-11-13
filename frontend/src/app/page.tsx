@@ -34,8 +34,8 @@ export default function Home() {
         {/* Hero Section */}
         <div className="text-center mb-12 md:mb-16 relative">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 font-mono leading-tight">
-              <span className="text-electric-cyan">The Oracle of Flow</span>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 font-mono leading-tight text-electric-cyan">
+              The Oracle of Flow
             </h1>
             <div className="relative">
               <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-light-gray font-light leading-relaxed">

@@ -6,12 +6,13 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useAccount } from 'wagmi'
-import { parseEther, formatEther } from 'viem'
+import { useState, useEffect, useCallback } from 'react'
+import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useAccount, useChainId } from 'wagmi'
+import { parseEther } from 'viem'
 import { useContractData } from '@/lib/web3/DataProvider'
 import { getContractData } from '@/lib/contracts/utils'
 import TransactionButton from '@/components/TransactionButton'
+import { parseContractError, formatErrorForDisplay } from '@/lib/utils/errorParser'
 
 interface StakeTransactionProps {
   amount: string
@@ -20,26 +21,27 @@ interface StakeTransactionProps {
 }
 
 export default function StakeTransaction({ amount, minStake, onSuccess }: StakeTransactionProps) {
-  const { contractAddresses, refetchStakingInfo } = useContractData()
+  const { contractAddresses, refetchStakingInfo, tokenBalance } = useContractData()
+  const chainId = useChainId()
   const [flowTokenAbi, setFlowTokenAbi] = useState<any[]>([])
   const [stakingAbi, setStakingAbi] = useState<any[]>([])
-  const [approveHash, setApproveHash] = useState<`0x${string}` | null>(null)
+  const [needsApproval, setNeedsApproval] = useState(false)
 
-  // Load ABIs
+  // Load ABIs based on connected chain ID
   useEffect(() => {
-    getContractData('FLOWToken', 'hardhat').then((data) => {
+    getContractData('FLOWToken', chainId).then((data) => {
       if (data) setFlowTokenAbi(data.abi)
     })
-    getContractData('CuratorStaking', 'hardhat').then((data) => {
+    getContractData('CuratorStaking', chainId).then((data) => {
       if (data) setStakingAbi(data.abi)
     })
-  }, [])
+  }, [chainId])
 
   // Get user address
   const { address } = useAccount()
   
   // Check allowance
-  const { data: allowance } = useReadContract({
+  const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: contractAddresses.FLOWToken as `0x${string}` | undefined,
     abi: flowTokenAbi,
     functionName: 'allowance',
@@ -54,82 +56,187 @@ export default function StakeTransaction({ amount, minStake, onSuccess }: StakeT
     },
   })
 
-  const { writeContract: writeApprove, isPending: isApproving } = useWriteContract()
-  const { isLoading: isApprovingConfirming, isSuccess: isApproveSuccess } = useWaitForTransactionReceipt({
-    hash: approveHash || undefined,
+  // Check token balance
+  const { data: balance } = useReadContract({
+    address: contractAddresses.FLOWToken as `0x${string}` | undefined,
+    abi: flowTokenAbi,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!address && !!contractAddresses.FLOWToken && flowTokenAbi.length > 0,
+    },
   })
 
-  const { writeContract: writeStake, data: stakeHash, isPending: isStaking } = useWriteContract()
-  const { isLoading: isStakingConfirming, isSuccess: isStakeSuccess } = useWaitForTransactionReceipt({
+  const { writeContractAsync: writeApproveAsync, data: approveHashData, isPending: isApproving, error: approveError } = useWriteContract()
+  const { isLoading: isApprovingConfirming, isSuccess: isApproveSuccess, isError: isApproveError } = useWaitForTransactionReceipt({
+    hash: approveHashData,
+  })
+
+  const { writeContractAsync: writeStakeAsync, data: stakeHash, isPending: isStaking, error: stakeError } = useWriteContract()
+  const { isLoading: isStakingConfirming, isSuccess: isStakeSuccess, isError: isStakeError } = useWaitForTransactionReceipt({
     hash: stakeHash,
   })
 
+  // Update needsApproval state
+  useEffect(() => {
+    if (amount && allowance !== undefined) {
+      try {
+        const amountWei = parseEther(amount)
+        const currentAllowance = allowance ? BigInt(allowance.toString()) : 0n
+        setNeedsApproval(currentAllowance < amountWei)
+      } catch (error) {
+        setNeedsApproval(true)
+      }
+    }
+  }, [amount, allowance])
+
   // Auto-stake after approval succeeds
   useEffect(() => {
-    if (isApproveSuccess && contractAddresses.CuratorStaking && stakingAbi.length > 0) {
-      const amountWei = parseEther(amount)
-      writeStake({
-        address: contractAddresses.CuratorStaking as `0x${string}`,
-        abi: stakingAbi,
-        functionName: 'stake',
-        args: [amountWei],
-      })
+    if (isApproveSuccess && contractAddresses.CuratorStaking && stakingAbi.length > 0 && amount) {
+      const stake = async () => {
+        try {
+          const amountWei = parseEther(amount)
+          await writeStakeAsync({
+            address: contractAddresses.CuratorStaking as `0x${string}`,
+            abi: stakingAbi,
+            functionName: 'stake',
+            args: [amountWei],
+          })
+        } catch (error) {
+          console.error('Auto-stake error:', error)
+        }
+      }
+      stake()
     }
-  }, [isApproveSuccess, contractAddresses.CuratorStaking, stakingAbi, amount, writeStake])
+  }, [isApproveSuccess, contractAddresses.CuratorStaking, stakingAbi, amount, writeStakeAsync])
 
   // Handle stake success
   useEffect(() => {
-    if (isStakeSuccess && onSuccess) {
-      onSuccess()
+    if (isStakeSuccess) {
       refetchStakingInfo()
-    }
-  }, [isStakeSuccess, onSuccess, refetchStakingInfo])
-
-  const handleStake = async () => {
-    if (!contractAddresses.CuratorStaking || !contractAddresses.FLOWToken) {
-      throw new Error('Contracts not loaded')
-    }
-
-    const amountWei = parseEther(amount)
-    const currentAllowance = allowance ? BigInt(allowance.toString()) : 0n
-
-    // Check if approval is needed
-    if (currentAllowance < amountWei) {
-      const approveTxHash = await writeApprove({
-        address: contractAddresses.FLOWToken as `0x${string}`,
-        abi: flowTokenAbi,
-        functionName: 'approve',
-        args: [contractAddresses.CuratorStaking as `0x${string}`, amountWei],
-      })
-      if (approveTxHash) {
-        setApproveHash(approveTxHash)
+      refetchAllowance()
+      if (onSuccess) {
+        onSuccess()
       }
-    } else {
-      // Already approved, stake directly
-      writeStake({
-        address: contractAddresses.CuratorStaking as `0x${string}`,
-        abi: stakingAbi,
-        functionName: 'stake',
-        args: [amountWei],
-      })
     }
-  }
+  }, [isStakeSuccess, onSuccess, refetchStakingInfo, refetchAllowance])
+
+  // Handle errors
+  useEffect(() => {
+    if (isApproveError && approveError) {
+      console.error('Approval error:', approveError)
+    }
+    if (isStakeError && stakeError) {
+      console.error('Stake error:', stakeError)
+    }
+  }, [isApproveError, approveError, isStakeError, stakeError])
+
+  const handleStake = useCallback(async (): Promise<void> => {
+    // Validation - return early instead of throwing
+    if (!contractAddresses.CuratorStaking || !contractAddresses.FLOWToken) {
+      const error = new Error('Contracts not loaded. Please ensure contracts are deployed.')
+      // Let TransactionButton handle the error silently
+      throw error
+    }
+
+    if (!address) {
+      const error = new Error('Wallet not connected. Please connect your wallet.')
+      throw error
+    }
+
+    if (!amount || parseFloat(amount) <= 0) {
+      const error = new Error('Please enter a valid stake amount')
+      throw error
+    }
+
+    if (parseFloat(amount) < minStake) {
+      const error = new Error(`Minimum stake is ${minStake.toLocaleString()} FLOW tokens`)
+      throw error
+    }
+
+    // Check balance
+    if (balance) {
+      const balanceWei = BigInt(balance.toString())
+      const amountWei = parseEther(amount)
+      if (balanceWei < amountWei) {
+        const error = new Error('Insufficient FLOW token balance')
+        throw error
+      }
+    }
+
+    try {
+      const amountWei = parseEther(amount)
+      const currentAllowance = allowance ? BigInt(allowance.toString()) : 0n
+
+      // Check if approval is needed
+      if (currentAllowance < amountWei) {
+        // Approve first
+        try {
+          await writeApproveAsync({
+            address: contractAddresses.FLOWToken as `0x${string}`,
+            abi: flowTokenAbi,
+            functionName: 'approve',
+            args: [contractAddresses.CuratorStaking as `0x${string}`, amountWei],
+          })
+          // Approval will trigger auto-stake via useEffect
+        } catch (error) {
+          // Parse error and throw - TransactionButton will catch and handle silently
+          const parsedError = parseContractError(error)
+          throw new Error(formatErrorForDisplay(parsedError))
+        }
+      } else {
+        // Already approved, stake directly
+        try {
+          await writeStakeAsync({
+            address: contractAddresses.CuratorStaking as `0x${string}`,
+            abi: stakingAbi,
+            functionName: 'stake',
+            args: [amountWei],
+          })
+        } catch (error) {
+          // Parse error and throw - TransactionButton will catch and handle silently
+          const parsedError = parseContractError(error)
+          throw new Error(formatErrorForDisplay(parsedError))
+        }
+      }
+    } catch (error) {
+      // Re-throw with parsed error message - TransactionButton will catch and handle silently
+      if (error instanceof Error) {
+        throw error
+      }
+      const parsedError = parseContractError(error)
+      throw new Error(formatErrorForDisplay(parsedError))
+    }
+  }, [
+    contractAddresses,
+    address,
+    amount,
+    minStake,
+    balance,
+    allowance,
+    flowTokenAbi,
+    stakingAbi,
+    writeApproveAsync,
+    writeStakeAsync,
+  ])
 
   const isLoading = isApproving || isApprovingConfirming || isStaking || isStakingConfirming
 
   return (
     <TransactionButton
       onClick={handleStake}
-      disabled={!amount || parseFloat(amount) < minStake || isLoading}
+      disabled={!amount || parseFloat(amount) < minStake || isLoading || !contractAddresses.CuratorStaking || !contractAddresses.FLOWToken}
+      transactionType={needsApproval && isApproving ? 'approve' : 'stake'}
+      transactionMessage={needsApproval && isApproving ? 'Approving FLOW tokens for staking...' : 'Staking FLOW tokens to become a Curator...'}
       onSuccess={() => {
         refetchStakingInfo()
+        refetchAllowance()
         if (onSuccess) onSuccess()
       }}
-      onError={(error) => {
-        console.error('Staking error:', error)
-      }}
     >
-      {isLoading ? 'Processing...' : 'Stake FLOW Tokens'}
+      {isLoading 
+        ? (needsApproval && isApproving ? 'Approving...' : 'Staking...') 
+        : 'Stake FLOW Tokens'}
     </TransactionButton>
   )
 }
