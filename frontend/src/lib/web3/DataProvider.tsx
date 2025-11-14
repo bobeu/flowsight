@@ -86,9 +86,9 @@ export default function DataProvider({ children }: { children: React.ReactNode }
 
   // State
   const [tokenBalance, setTokenBalance] = useState<string>('0')
-  const [tokenBalanceLoading, setTokenBalanceLoading] = useState(false)
+  const [tokenBalanceLoading] = useState(false)
   const [stakingInfo, setStakingInfo] = useState<StakingInfo | null>(null)
-  const [stakingInfoLoading, setStakingInfoLoading] = useState(false)
+  const [stakingInfoLoading] = useState(false)
   const [proposals, setProposals] = useState<ProposalInfo[]>([])
   const [proposalsLoading, setProposalsLoading] = useState(false)
 

@@ -7,7 +7,7 @@
 
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import * as Tooltip from '@/components/ui/Tooltip'
 import { getErrorMessage } from '@/lib/utils/errorParser'

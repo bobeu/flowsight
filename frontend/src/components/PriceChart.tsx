@@ -31,7 +31,6 @@ export default function PriceChart({ asset }: PriceChartProps) {
       // Base prices for different assets
       const basePrice = asset === 'BTC' ? 45000 : asset === 'ETH' ? 2500 : asset === 'BNB' ? 350 : 2500
       const now = new Date()
-      let previousPrice = basePrice
       
       for (let i = 23; i >= 0; i--) {
         const timestamp = new Date(now.getTime() - i * 60 * 60 * 1000)
@@ -41,7 +40,6 @@ export default function PriceChart({ asset }: PriceChartProps) {
           timestamp: timestamp.toISOString(),
           price: price,
         })
-        previousPrice = price
       }
       
       // Calculate price change

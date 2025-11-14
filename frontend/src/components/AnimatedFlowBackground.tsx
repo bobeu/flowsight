@@ -239,7 +239,7 @@ export default function AnimatedFlowBackground() {
       }
 
       // Draw blockchain connections first (behind particles)
-      particlesRef.current.forEach((particle, i) => {
+      particlesRef.current.forEach((particle) => {
         if (particle.isLarge) {
           particle.connections.forEach((connIndex) => {
             const connected = particlesRef.current[connIndex]

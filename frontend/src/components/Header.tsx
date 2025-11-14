@@ -20,13 +20,13 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 export default function Header() {
   const router = useRouter()
-  const [accepted, setAccepted] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [featuresMenuOpen, setFeaturesMenuOpen] = useState(false)
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    setAccepted(isDisclaimerAccepted())
+    // Check disclaimer acceptance status (used for navigation logic)
+    isDisclaimerAccepted()
     
     return () => {
       if (hoverTimeoutRef.current) {

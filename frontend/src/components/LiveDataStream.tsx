@@ -8,7 +8,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Badge } from '@/components/ui/Badge'
 
 interface StreamItem {
   id: string

@@ -12,8 +12,6 @@ import { useState } from 'react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
-import * as Tooltip from '@/components/ui/Tooltip'
 
 interface APIPlan {
   name: string

@@ -8,7 +8,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useAccount, useChainId } from 'wagmi'
-import { parseEther, formatEther } from 'viem'
+import { parseEther } from 'viem'
 import { useContractData } from '@/lib/web3/DataProvider'
 import { getContractData } from '@/lib/contracts/utils'
 import TransactionButton from '@/components/TransactionButton'

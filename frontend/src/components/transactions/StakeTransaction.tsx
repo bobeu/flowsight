@@ -21,7 +21,7 @@ interface StakeTransactionProps {
 }
 
 export default function StakeTransaction({ amount, minStake, onSuccess }: StakeTransactionProps) {
-  const { contractAddresses, refetchStakingInfo, tokenBalance } = useContractData()
+  const { contractAddresses, refetchStakingInfo } = useContractData()
   const chainId = useChainId()
   const [flowTokenAbi, setFlowTokenAbi] = useState<any[]>([])
   const [stakingAbi, setStakingAbi] = useState<any[]>([])

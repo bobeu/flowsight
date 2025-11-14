@@ -7,7 +7,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import * as Tooltip from '@/components/ui/Tooltip'
@@ -15,14 +15,14 @@ import { useContractData } from '@/lib/web3/DataProvider'
 import { useAccount } from 'wagmi'
 import StakeTransaction from '@/components/transactions/StakeTransaction'
 
-interface WalletTag {
-  address: string
-  label: string
-  category: 'exchange' | 'vc' | 'institution' | 'whale' | 'nft_collector' | 'other'
-  verified: boolean
-  curatorAddress: string
-  timestamp: string
-}
+// interface WalletTag {
+//   address: string
+//   label: string
+//   category: 'exchange' | 'vc' | 'institution' | 'whale' | 'nft_collector' | 'other'
+//   verified: boolean
+//   curatorAddress: string
+//   timestamp: string
+// }
 
 interface CuratorStatus {
   isCurator: boolean
@@ -36,7 +36,6 @@ export default function CuratorWalletTagging() {
   const [walletAddress, setWalletAddress] = useState('')
   const [label, setLabel] = useState('')
   const [category, setCategory] = useState<string>('whale')
-  const [recentTags, setRecentTags] = useState<WalletTag[]>([])
   const [stakeAmount, setStakeAmount] = useState('')
 
   const { isConnected } = useAccount()
@@ -227,8 +226,8 @@ export default function CuratorWalletTagging() {
         </Tooltip.TooltipProvider>
       </div>
 
-      {/* Recent Tags */}
-      {recentTags.length > 0 && (
+      {/* Recent Tags - TODO: Implement when backend API is ready */}
+      {/* {recentTags.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold text-electric-cyan mb-4">
             Your Recent Tags
@@ -252,7 +251,7 @@ export default function CuratorWalletTagging() {
             ))}
           </div>
         </div>
-      )}
+      )} */}
     </div>
   )
 }

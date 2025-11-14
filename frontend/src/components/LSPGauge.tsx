@@ -10,7 +10,6 @@
 
 import { useEffect, useState } from 'react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
-import { Progress } from '@/components/ui/Progress'
 import * as Tooltip from '@/components/ui/Tooltip'
 import { getCurrentLSP, getLSPHistory } from '@/lib/api'
 

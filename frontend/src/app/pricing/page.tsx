@@ -72,7 +72,6 @@ const pricingTiers: PricingTier[] = [
 ]
 
 export default function PricingPage() {
-  const [selectedTier, setSelectedTier] = useState<string | null>(null)
   const [paymentMethod, setPaymentMethod] = useState<'fiat' | 'flow'>('fiat')
 
   const handleSubscribe = (tier: PricingTier) => {

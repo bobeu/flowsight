@@ -38,7 +38,8 @@ export default function AnimatedMetric({
 
   useEffect(() => {
     // Intersection Observer to trigger animation when in view
-    if (elementRef.current) {
+    const currentElement = elementRef.current
+    if (currentElement) {
       observerRef.current = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
@@ -49,12 +50,12 @@ export default function AnimatedMetric({
         },
         { threshold: 0.1 }
       )
-      observerRef.current.observe(elementRef.current)
+      observerRef.current.observe(currentElement)
     }
 
     return () => {
-      if (observerRef.current && elementRef.current) {
-        observerRef.current.unobserve(elementRef.current)
+      if (observerRef.current && currentElement) {
+        observerRef.current.unobserve(currentElement)
       }
     }
   }, [isVisible])
@@ -85,7 +86,7 @@ export default function AnimatedMetric({
     animate()
   }, [isVisible, value, duration])
 
-  const formattedValue = displayValue.toFixed(decimals).toLocaleString('en-US', {
+  const formattedValue = displayValue.toLocaleString('en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   })

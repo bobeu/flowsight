@@ -6,23 +6,11 @@
  */
 
 import type { Metadata } from 'next'
-import { Inter, Space_Mono } from 'next/font/google'
 import '@rainbow-me/rainbowkit/styles.css'
 import './globals.css'
 import WagmiProvider from '@/lib/web3/WagmiProvider'
 import TransactionProvider from '@/lib/context/TransactionContext'
 import TransactionStatusMonitorWrapper from './TransactionStatusMonitorWrapper'
-
-const inter = Inter({ 
-  subsets: ['latin'],
-  variable: '--font-inter',
-})
-
-const spaceMono = Space_Mono({ 
-  weight: ['400', '700'],
-  subsets: ['latin'],
-  variable: '--font-space-mono',
-})
 
 export const metadata: Metadata = {
   title: 'FlowSight - The Oracle of Flow',
@@ -36,7 +24,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${spaceMono.variable} font-sans bg-midnight-blue text-light-gray`}>
+      {/* <body className={`${inter.variable} ${spaceMono.variable} font-sans bg-midnight-blue text-light-gray`}> */}
+      <body className={`font-sans bg-midnight-blue text-light-gray`}>
         <WagmiProvider>
           <TransactionProvider>
             {children}

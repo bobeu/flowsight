@@ -18,7 +18,6 @@ import {
   DialogTitle,
 } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
-import Link from 'next/link'
 
 const DISCLAIMER_ACCEPTED_KEY = 'flowsight_disclaimer_accepted'
 
