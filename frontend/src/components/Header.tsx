@@ -185,6 +185,14 @@ export default function Header() {
                       $FLOW Token
                     </Link>
                   </DropdownMenu.DropdownMenuItem>
+                  <DropdownMenu.DropdownMenuItem asChild>
+                    <Link 
+                      href="/advisory" 
+                      className="cursor-pointer"
+                    >
+                      Advisory Services
+                    </Link>
+                  </DropdownMenu.DropdownMenuItem>
                 </DropdownMenu.DropdownMenuContent>
               </DropdownMenu.DropdownMenu>
               
@@ -272,6 +280,13 @@ export default function Header() {
                     className="text-light-gray hover:text-electric-cyan transition-colors py-1 text-sm"
                   >
                     $FLOW Token
+                  </Link>
+                  <Link
+                    href="/advisory"
+                    onClick={handleLinkClick}
+                    className="text-light-gray hover:text-electric-cyan transition-colors py-1 text-sm"
+                  >
+                    Advisory Services
                   </Link>
                 </div>
                 
