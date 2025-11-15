@@ -14,7 +14,7 @@ import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
  * @notice Implements slashing mechanism for malicious or inaccurate data tagging
  * 
  * Key Features:
- * - Minimum staking requirement: 10,000 FLOW
+ * - Initial minimum staking requirement: 10,000 FLOW
  * - Slashing mechanism for bad actors (5% of staked amount)
  * - Reward distribution from API revenue
  * - Governance voting rights based on stake
@@ -23,7 +23,7 @@ contract CuratorStaking is Ownable, ReentrancyGuard, Pausable {
     /// @dev Reference to FLOW token contract
     IERC20 public immutable flowToken;
     
-    /// @dev Minimum amount required to become a Curator (10,000 FLOW)
+    /// @dev Minimum amount required to become a Curator (defaults to 10,000 FLOW)
     /// @notice Can be updated by owner via setMinStake function
     uint256 public MIN_STAKE = 10_000 * 10**18;
     
@@ -119,26 +119,27 @@ contract CuratorStaking is Ownable, ReentrancyGuard, Pausable {
      */
     function stake(uint256 amount) external nonReentrant whenNotPaused {
         require(amount >= MIN_STAKE, "CuratorStaking: Amount below minimum");
+        address sender = _msgSender();
         require(
-            flowToken.transferFrom(msg.sender, address(this), amount),
+            flowToken.transferFrom(sender, address(this), amount),
             "CuratorStaking: Transfer failed"
         );
         
-        CuratorInfo storage curator = curators[msg.sender];
+        CuratorInfo storage curator = curators[sender];
         
-        if (!curator.isActive) {
+        if(!curator.isActive) {
             curator.isActive = true;
             curator.stakedAt = block.timestamp;
-            if (!isInCuratorList[msg.sender]) {
-                curatorList.push(msg.sender);
-                isInCuratorList[msg.sender] = true;
+            if(!isInCuratorList[sender]) {
+                curatorList.push(sender);
+                isInCuratorList[sender] = true;
             }
         }
         
         curator.stakedAmount += amount;
         totalStaked += amount;
         
-        emit Staked(msg.sender, amount);
+        emit Staked(sender, amount);
     }
     
     /**
@@ -147,7 +148,7 @@ contract CuratorStaking is Ownable, ReentrancyGuard, Pausable {
      * @notice Curator must maintain minimum stake or unstake all
      */
     function unstake(uint256 amount) external nonReentrant whenNotPaused {
-        CuratorInfo storage curator = curators[msg.sender];
+        CuratorInfo storage curator = curators[_msgSender()];
         require(curator.isActive, "CuratorStaking: Not a curator");
         require(amount > 0, "CuratorStaking: Invalid amount");
         require(
@@ -158,7 +159,7 @@ contract CuratorStaking is Ownable, ReentrancyGuard, Pausable {
         uint256 remainingStake = curator.stakedAmount - amount;
         
         // If unstaking all, deactivate curator
-        if (remainingStake == 0) {
+        if(remainingStake == 0) {
             curator.isActive = false;
         } else {
             // Must maintain minimum stake
@@ -172,18 +173,18 @@ contract CuratorStaking is Ownable, ReentrancyGuard, Pausable {
         totalStaked -= amount;
         
         require(
-            flowToken.transfer(msg.sender, amount),
+            flowToken.transfer(_msgSender(), amount),
             "CuratorStaking: Transfer failed"
         );
         
-        emit Unstaked(msg.sender, amount);
+        emit Unstaked(_msgSender(), amount);
     }
     
     /**
      * @dev Slash a curator for malicious or inaccurate tagging
      * @param curator Address of the curator to slash
      * @param reason Reason for slashing
-     * @notice Only owner can slash (in production, this could be governance)
+     * @notice Only owner can slash (in production, we expect this use governance system)
      */
     function slashCurator(address curator, string calldata reason) external onlyOwner {
         CuratorInfo storage curatorInfo = curators[curator];
@@ -193,7 +194,7 @@ contract CuratorStaking is Ownable, ReentrancyGuard, Pausable {
         uint256 slashAmount = (curatorInfo.stakedAmount * SLASH_PERCENTAGE) / BASIS_POINTS;
         
         // Ensure we don't slash more than available
-        if (slashAmount > curatorInfo.stakedAmount) {
+        if(slashAmount > curatorInfo.stakedAmount) {
             slashAmount = curatorInfo.stakedAmount;
         }
         
@@ -207,7 +208,7 @@ contract CuratorStaking is Ownable, ReentrancyGuard, Pausable {
         ERC20Burnable(address(flowToken)).burn(slashAmount);
         
         // Deactivate if below minimum
-        if (curatorInfo.stakedAmount < MIN_STAKE) {
+        if(curatorInfo.stakedAmount < MIN_STAKE) {
             curatorInfo.isActive = false;
         }
         
@@ -244,7 +245,7 @@ contract CuratorStaking is Ownable, ReentrancyGuard, Pausable {
     function fundRewardPool(uint256 amount) external onlyOwner {
         require(amount > 0, "CuratorStaking: Invalid amount");
         require(
-            flowToken.transferFrom(msg.sender, address(this), amount),
+            flowToken.transferFrom(_msgSender(), address(this), amount),
             "CuratorStaking: Transfer failed"
         );
         

@@ -44,8 +44,7 @@ const config: HardhatUserConfig = {
   namedAccounts: {
     deployer: {
       default: 0,
-      // Add network-specific deployer accounts if needed
-      // 97: `privatekey://${process.env.PRIVATE_KEY}`,
+      97: `privatekey://${process.env.PRIVATE_KEY}`,
     },
   },
 };

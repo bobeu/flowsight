@@ -7,7 +7,7 @@
 import globalContractData from './contracts.json'
 
 export type ContractName = 'FLOWToken' | 'CuratorStaking' | 'WhaleAlertBidding' | 'Governance'
-export type NetworkName = 'hardhat' | 'bnbTestnet'
+export type NetworkName = 'bnbTestnet'
 
 interface ContractAddresses {
   FLOWToken?: string
@@ -38,7 +38,7 @@ export function getChainName(chainId: number): NetworkName | null {
   const chainIdStr = chainId.toString()
   const name = chainNames[chainIdStr]
   
-  if (name === 'hardhat' || name === 'bnbTestnet') {
+  if (name === 'bnbTestnet') {
     return name
   }
   
@@ -52,7 +52,7 @@ export function getChainName(chainId: number): NetworkName | null {
  */
 export async function getContractData(
   contractName: ContractName,
-  networkOrChainId: NetworkName | number = 'hardhat'
+  networkOrChainId: NetworkName | number = 'bnbTestnet'
 ): Promise<{ address: string; abi: any[] } | null> {
   try {
     // Convert chainId to network name if needed

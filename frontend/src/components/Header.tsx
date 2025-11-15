@@ -51,13 +51,13 @@ export default function Header() {
     <Tooltip.TooltipProvider>
       <header className="bg-midnight-blue border-b border-electric-cyan/20">
         <nav className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             {/* Logo */}
             <Tooltip.Tooltip>
               <Tooltip.TooltipTrigger asChild>
                 <Link 
                   href="/" 
-                  className="flex items-center gap-2 text-xl sm:text-2xl font-bold font-mono text-electric-cyan hover:text-electric-cyan/80 transition-colors"
+                  className="flex items-center gap-1 sm:gap-2 text-base sm:text-lg md:text-xl lg:text-2xl font-bold font-mono text-electric-cyan hover:text-electric-cyan/80 transition-colors flex-shrink min-w-0"
                   onClick={handleLinkClick}
                 >
                   <Image
@@ -65,10 +65,10 @@ export default function Header() {
                     alt="FlowSight Logo"
                     width={64}
                     height={64}
-                    className="w-12 h-12 sm:w-16 sm:h-16"
+                    className="w-12 h-12 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-16 lg:h-16 flex-shrink-0"
                     priority
                   />
-                  FlowSight
+                  <span className="hidden sm:inline truncate text-electric-cyan">FlowSight</span>
                 </Link>
               </Tooltip.TooltipTrigger>
               <Tooltip.TooltipContent>
@@ -78,7 +78,12 @@ export default function Header() {
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center space-x-4 xl:space-x-6">
-              <ConnectButton />
+              <ConnectButton 
+                accountStatus={{
+                  smallScreen: 'avatar',
+                  largeScreen: 'full',
+                }}
+              />
               <ConnectionStatus />
               
               <Tooltip.Tooltip>
@@ -211,12 +216,25 @@ export default function Header() {
               </Tooltip.Tooltip>
             </div>
 
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden text-electric-cyan hover:text-electric-cyan/80 transition-colors p-2"
-              aria-label="Toggle menu"
-            >
+            {/* Mobile Navigation - Connect Button and Menu */}
+            <div className="lg:hidden flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              <div className="scale-90 sm:scale-100">
+                <ConnectButton 
+                  accountStatus={{
+                    smallScreen: 'avatar',
+                    largeScreen: 'avatar',
+                  }}
+                  chainStatus={{
+                    smallScreen: 'icon',
+                    largeScreen: 'full',
+                  }}
+                />
+              </div>
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="text-electric-cyan hover:text-electric-cyan/80 transition-colors p-2"
+                aria-label="Toggle menu"
+              >
               <svg
                 className="w-6 h-6"
                 fill="none"
@@ -232,7 +250,8 @@ export default function Header() {
                   <path d="M4 6h16M4 12h16M4 18h16" />
                 )}
               </svg>
-            </button>
+              </button>
+            </div>
           </div>
 
           {/* Mobile Navigation Menu */}

@@ -12,7 +12,7 @@ import { WagmiProvider as WagmiProviderBase } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RainbowKitProvider, getDefaultConfig, darkTheme } from '@rainbow-me/rainbowkit';
 import { http } from 'viem';
-import { hardhat, bscTestnet } from 'wagmi/chains';
+import { bscTestnet } from 'wagmi/chains';
 import DataProvider from './DataProvider';
 
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '';
@@ -55,14 +55,14 @@ function getWagmiConfig() {
       appIcon: '/logo.png',
       appDescription: 'The Oracle of Flow - Predicting Crypto Liquidity Shocks',
       appUrl: typeof window !== 'undefined' ? window.location.origin : '',
-      chains: [hardhat, bscTestnet],
+      chains: [bscTestnet],
       ssr: true,
       multiInjectedProviderDiscovery: true,
       pollingInterval: 30_000,
       syncConnectedChain: true,
       transports: {
-        [hardhat.id]: http(),
-        [bscTestnet.id]: http(process.env.NEXT_PUBLIC_BNB_TESTNET_RPC_URL || 'https://data-seed-prebsc-1-s1.binance.org:8545'),
+        [bscTestnet.id]: http('https://data-seed-prebsc-1-s1.binance.org:8545'),
+        // [bscTestnet.id]: http(),
       },
     })
   }
@@ -94,7 +94,7 @@ export default function WagmiProvider({ children }: { children: React.ReactNode 
           coolMode={true}
           modalSize="compact"
           theme={theme}
-          initialChain={hardhat.id}
+          initialChain={bscTestnet.id}
           showRecentTransactions={true}
           appInfo={{
             appName: 'FlowSight',

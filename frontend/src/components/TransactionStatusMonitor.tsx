@@ -123,11 +123,10 @@ export default function TransactionStatusMonitor({
 
   const getExplorerUrl = () => {
     if (!transaction.hash) return null
-    // For hardhat/local, you might want to use a local explorer
-    // For testnets, use the appropriate explorer
-    const chainId = 1337 // hardhat default, adjust as needed
-    if (chainId === 1337 || chainId === 31337) {
-      return `http://localhost:8545/tx/${transaction.hash}`
+    // For BSC Testnet, use BscScan
+    const chainId = 97 // BSC Testnet
+    if (chainId === 97) {
+      return `https://testnet.bscscan.com/tx/${transaction.hash}`
     }
     // Add other networks as needed
     return null

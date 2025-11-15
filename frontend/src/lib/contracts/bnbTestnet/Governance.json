@@ -1,5 +1,5 @@
 {
-  "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+  "address": "0x99C62eF80CA0ECc942994d407ecA89dDE3625F7d",
   "abi": [
     {
       "inputs": [
@@ -58,25 +58,6 @@
       "anonymous": false,
       "inputs": [
         {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "oldMinStake",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "newMinStake",
-          "type": "uint256"
-        }
-      ],
-      "name": "MinStakeUpdated",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
           "indexed": true,
           "internalType": "address",
           "name": "previousOwner",
@@ -109,57 +90,25 @@
       "anonymous": false,
       "inputs": [
         {
-          "indexed": false,
+          "indexed": true,
           "internalType": "uint256",
-          "name": "amount",
+          "name": "proposalId",
           "type": "uint256"
-        }
-      ],
-      "name": "RewardPoolFunded",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
+        },
         {
           "indexed": true,
           "internalType": "address",
-          "name": "curator",
+          "name": "proposer",
           "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "RewardsDistributed",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "curator",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
         },
         {
           "indexed": false,
           "internalType": "string",
-          "name": "reason",
+          "name": "title",
           "type": "string"
         }
       ],
-      "name": "Slashed",
+      "name": "ProposalCreated",
       "type": "event"
     },
     {
@@ -167,18 +116,12 @@
       "inputs": [
         {
           "indexed": true,
-          "internalType": "address",
-          "name": "curator",
-          "type": "address"
-        },
-        {
-          "indexed": false,
           "internalType": "uint256",
-          "name": "amount",
+          "name": "proposalId",
           "type": "uint256"
         }
       ],
-      "name": "Staked",
+      "name": "ProposalExecuted",
       "type": "event"
     },
     {
@@ -199,23 +142,35 @@
       "inputs": [
         {
           "indexed": true,
+          "internalType": "uint256",
+          "name": "proposalId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
           "internalType": "address",
-          "name": "curator",
+          "name": "voter",
           "type": "address"
         },
         {
           "indexed": false,
+          "internalType": "bool",
+          "name": "support",
+          "type": "bool"
+        },
+        {
+          "indexed": false,
           "internalType": "uint256",
-          "name": "amount",
+          "name": "votes",
           "type": "uint256"
         }
       ],
-      "name": "Unstaked",
+      "name": "VoteCast",
       "type": "event"
     },
     {
       "inputs": [],
-      "name": "MIN_STAKE",
+      "name": "MIN_PROPOSAL_THRESHOLD",
       "outputs": [
         {
           "internalType": "uint256",
@@ -228,7 +183,7 @@
     },
     {
       "inputs": [],
-      "name": "SLASH_PERCENTAGE",
+      "name": "MIN_VOTING_PERIOD",
       "outputs": [
         {
           "internalType": "uint256",
@@ -242,75 +197,41 @@
     {
       "inputs": [
         {
+          "internalType": "string",
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "votingPeriod",
+          "type": "uint256"
+        }
+      ],
+      "name": "createProposal",
+      "outputs": [
+        {
           "internalType": "uint256",
           "name": "",
           "type": "uint256"
         }
       ],
-      "name": "curatorList",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "name": "curators",
-      "outputs": [
-        {
           "internalType": "uint256",
-          "name": "stakedAmount",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "stakedAt",
-          "type": "uint256"
-        },
-        {
-          "internalType": "bool",
-          "name": "isActive",
-          "type": "bool"
-        },
-        {
-          "internalType": "uint256",
-          "name": "totalSlashCount",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "totalRewards",
+          "name": "proposalId",
           "type": "uint256"
         }
       ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "curator",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "distributeRewards",
+      "name": "executeProposal",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -329,39 +250,13 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "fundRewardPool",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
       "inputs": [],
-      "name": "getAllCurators",
+      "name": "getAllProposals",
       "outputs": [
         {
-          "internalType": "address[]",
+          "internalType": "uint256[]",
           "name": "",
-          "type": "address[]"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "getCuratorCount",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
+          "type": "uint256[]"
         }
       ],
       "stateMutability": "view",
@@ -370,43 +265,68 @@
     {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "curator",
-          "type": "address"
+          "internalType": "uint256",
+          "name": "proposalId",
+          "type": "uint256"
         }
       ],
-      "name": "getCuratorInfo",
+      "name": "getProposal",
       "outputs": [
         {
           "components": [
             {
               "internalType": "uint256",
-              "name": "stakedAmount",
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "proposer",
+              "type": "address"
+            },
+            {
+              "internalType": "string",
+              "name": "title",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "description",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "startBlock",
               "type": "uint256"
             },
             {
               "internalType": "uint256",
-              "name": "stakedAt",
+              "name": "endBlock",
               "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "forVotes",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "againstVotes",
+              "type": "uint256"
+            },
+            {
+              "internalType": "enum Governance.ProposalState",
+              "name": "state",
+              "type": "uint8"
             },
             {
               "internalType": "bool",
-              "name": "isActive",
+              "name": "executed",
               "type": "bool"
-            },
-            {
-              "internalType": "uint256",
-              "name": "totalSlashCount",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "totalRewards",
-              "type": "uint256"
             }
           ],
-          "internalType": "struct CuratorStaking.CuratorInfo",
-          "name": "",
+          "internalType": "struct Governance.ProposalInfo",
+          "name": "proposalInfo",
           "type": "tuple"
         }
       ],
@@ -416,12 +336,17 @@
     {
       "inputs": [
         {
+          "internalType": "uint256",
+          "name": "proposalId",
+          "type": "uint256"
+        },
+        {
           "internalType": "address",
-          "name": "",
+          "name": "voter",
           "type": "address"
         }
       ],
-      "name": "isInCuratorList",
+      "name": "hasVoted",
       "outputs": [
         {
           "internalType": "bool",
@@ -467,14 +392,7 @@
     },
     {
       "inputs": [],
-      "name": "renounceOwnership",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "rewardPool",
+      "name": "proposalCount",
       "outputs": [
         {
           "internalType": "uint256",
@@ -489,54 +407,80 @@
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "newMinStake",
+          "name": "",
           "type": "uint256"
         }
       ],
-      "name": "setMinStake",
-      "outputs": [],
-      "stateMutability": "nonpayable",
+      "name": "proposalIds",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
         {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "proposals",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        },
+        {
           "internalType": "address",
-          "name": "curator",
+          "name": "proposer",
           "type": "address"
         },
         {
           "internalType": "string",
-          "name": "reason",
+          "name": "title",
           "type": "string"
-        }
-      ],
-      "name": "slashCurator",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
+        },
+        {
+          "internalType": "string",
+          "name": "description",
+          "type": "string"
+        },
         {
           "internalType": "uint256",
-          "name": "amount",
+          "name": "startBlock",
           "type": "uint256"
-        }
-      ],
-      "name": "stake",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "totalSlashed",
-      "outputs": [
+        },
         {
           "internalType": "uint256",
-          "name": "",
+          "name": "endBlock",
           "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "forVotes",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "againstVotes",
+          "type": "uint256"
+        },
+        {
+          "internalType": "enum Governance.ProposalState",
+          "name": "state",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bool",
+          "name": "executed",
+          "type": "bool"
         }
       ],
       "stateMutability": "view",
@@ -544,15 +488,9 @@
     },
     {
       "inputs": [],
-      "name": "totalStaked",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
+      "name": "renounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -579,15 +517,20 @@
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "amount",
+          "name": "proposalId",
           "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "support",
+          "type": "bool"
         }
       ],
-      "name": "unstake",
+      "name": "vote",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
     }
   ],
-  "contractName": "CuratorStaking"
+  "contractName": "Governance"
 }

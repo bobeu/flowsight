@@ -156,9 +156,9 @@ export default function DataProvider({ children }: { children: React.ReactNode }
 
   // Update token balance
   useEffect(() => {
-    console.log("ReadData", readData);
-    if (readData && readData[0]?.status === 'success' && readData[0].result) {
-      setTokenBalance(formatEther(readData[0]?.result[0] as bigint))
+    // console.log("ReadData", readData);
+    if (readData && readData.length > 0 && readData[0].status === 'success' && readData[0].result) {
+      setTokenBalance(formatEther(readData[0]?.result as unknown as bigint || 0n))
     } else {
       setTokenBalance('0')
     }

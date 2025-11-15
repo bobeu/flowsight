@@ -1,5 +1,5 @@
 {
-  "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+  "address": "0x1a375D2aEF1370B306B4aCc9d930e3C2defaBF9c",
   "abi": [
     {
       "inputs": [
@@ -60,6 +60,68 @@
         {
           "indexed": true,
           "internalType": "address",
+          "name": "whaleAddress",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "bidder",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "previousBidder",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "refundAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "BidPlaced",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "whaleAddress",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "bidder",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "BidWithdrawn",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
           "name": "previousOwner",
           "type": "address"
         },
@@ -90,38 +152,13 @@
       "anonymous": false,
       "inputs": [
         {
-          "indexed": true,
-          "internalType": "uint256",
-          "name": "proposalId",
-          "type": "uint256"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "proposer",
-          "type": "address"
-        },
-        {
           "indexed": false,
-          "internalType": "string",
-          "name": "title",
-          "type": "string"
-        }
-      ],
-      "name": "ProposalCreated",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
           "internalType": "uint256",
-          "name": "proposalId",
+          "name": "amount",
           "type": "uint256"
         }
       ],
-      "name": "ProposalExecuted",
+      "name": "TokensBurned",
       "type": "event"
     },
     {
@@ -138,57 +175,32 @@
       "type": "event"
     },
     {
-      "anonymous": false,
+      "inputs": [],
+      "name": "MIN_BID",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
-          "indexed": true,
           "internalType": "uint256",
-          "name": "proposalId",
+          "name": "",
           "type": "uint256"
-        },
+        }
+      ],
+      "name": "activeWhaleAddresses",
+      "outputs": [
         {
-          "indexed": true,
           "internalType": "address",
-          "name": "voter",
+          "name": "",
           "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "bool",
-          "name": "support",
-          "type": "bool"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "votes",
-          "type": "uint256"
-        }
-      ],
-      "name": "VoteCast",
-      "type": "event"
-    },
-    {
-      "inputs": [],
-      "name": "MIN_PROPOSAL_THRESHOLD",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "MIN_VOTING_PERIOD",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -197,41 +209,12 @@
     {
       "inputs": [
         {
-          "internalType": "string",
-          "name": "title",
-          "type": "string"
-        },
-        {
-          "internalType": "string",
-          "name": "description",
-          "type": "string"
-        },
-        {
           "internalType": "uint256",
-          "name": "votingPeriod",
+          "name": "amount",
           "type": "uint256"
         }
       ],
-      "name": "createProposal",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "proposalId",
-          "type": "uint256"
-        }
-      ],
-      "name": "executeProposal",
+      "name": "burnBiddingFees",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -251,12 +234,12 @@
     },
     {
       "inputs": [],
-      "name": "getAllProposals",
+      "name": "getActiveWhaleAddresses",
       "outputs": [
         {
-          "internalType": "uint256[]",
+          "internalType": "address[]",
           "name": "",
-          "type": "uint256[]"
+          "type": "address[]"
         }
       ],
       "stateMutability": "view",
@@ -265,68 +248,38 @@
     {
       "inputs": [
         {
-          "internalType": "uint256",
-          "name": "proposalId",
-          "type": "uint256"
+          "internalType": "address",
+          "name": "whaleAddress",
+          "type": "address"
         }
       ],
-      "name": "getProposal",
+      "name": "getBid",
       "outputs": [
         {
           "components": [
             {
-              "internalType": "uint256",
-              "name": "id",
-              "type": "uint256"
-            },
-            {
               "internalType": "address",
-              "name": "proposer",
+              "name": "bidder",
               "type": "address"
             },
             {
-              "internalType": "string",
-              "name": "title",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "description",
-              "type": "string"
-            },
-            {
               "internalType": "uint256",
-              "name": "startBlock",
+              "name": "amount",
               "type": "uint256"
             },
             {
               "internalType": "uint256",
-              "name": "endBlock",
+              "name": "timestamp",
               "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "forVotes",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "againstVotes",
-              "type": "uint256"
-            },
-            {
-              "internalType": "enum Governance.ProposalState",
-              "name": "state",
-              "type": "uint8"
             },
             {
               "internalType": "bool",
-              "name": "executed",
+              "name": "isActive",
               "type": "bool"
             }
           ],
-          "internalType": "struct Governance.ProposalInfo",
-          "name": "proposalInfo",
+          "internalType": "struct WhaleAlertBidding.Bid",
+          "name": "",
           "type": "tuple"
         }
       ],
@@ -336,17 +289,31 @@
     {
       "inputs": [
         {
-          "internalType": "uint256",
-          "name": "proposalId",
-          "type": "uint256"
-        },
-        {
           "internalType": "address",
-          "name": "voter",
+          "name": "user",
           "type": "address"
         }
       ],
-      "name": "hasVoted",
+      "name": "getUserTotalBid",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "isInActiveList",
       "outputs": [
         {
           "internalType": "bool",
@@ -391,99 +358,21 @@
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "proposalCount",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "name": "proposalIds",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "name": "proposals",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "id",
-          "type": "uint256"
-        },
         {
           "internalType": "address",
-          "name": "proposer",
+          "name": "whaleAddress",
           "type": "address"
         },
         {
-          "internalType": "string",
-          "name": "title",
-          "type": "string"
-        },
-        {
-          "internalType": "string",
-          "name": "description",
-          "type": "string"
-        },
-        {
           "internalType": "uint256",
-          "name": "startBlock",
+          "name": "amount",
           "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "endBlock",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "forVotes",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "againstVotes",
-          "type": "uint256"
-        },
-        {
-          "internalType": "enum Governance.ProposalState",
-          "name": "state",
-          "type": "uint8"
-        },
-        {
-          "internalType": "bool",
-          "name": "executed",
-          "type": "bool"
         }
       ],
-      "stateMutability": "view",
+      "name": "placeBid",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -491,6 +380,38 @@
       "name": "renounceOwnership",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "totalBidByUser",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalBurned",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -516,21 +437,50 @@
     {
       "inputs": [
         {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "whaleBids",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "bidder",
+          "type": "address"
+        },
+        {
           "internalType": "uint256",
-          "name": "proposalId",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "timestamp",
           "type": "uint256"
         },
         {
           "internalType": "bool",
-          "name": "support",
+          "name": "isActive",
           "type": "bool"
         }
       ],
-      "name": "vote",
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "whaleAddress",
+          "type": "address"
+        }
+      ],
+      "name": "withdrawBid",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
     }
   ],
-  "contractName": "Governance"
+  "contractName": "WhaleAlertBidding"
 }
