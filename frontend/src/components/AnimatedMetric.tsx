@@ -141,7 +141,7 @@ export default function AnimatedMetric({
   useEffect(() => {
     if (!isVisible || !showGlow) return
 
-    let startTime = Date.now()
+    const startTime = Date.now()
     const pulseDuration = 3000 // 3 seconds for full pulse cycle
 
     const pulseAnimation = () => {
