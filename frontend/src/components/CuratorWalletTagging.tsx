@@ -7,13 +7,17 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import * as Tooltip from '@/components/ui/Tooltip'
 import { useContractData } from '@/lib/web3/DataProvider'
 import { useAccount } from 'wagmi'
 import StakeTransaction from '@/components/transactions/StakeTransaction'
+import { useTransactionMonitor } from '@/lib/context/TransactionContext'
+import { createWalletTag, getCuratorStats, getWalletTags, type WalletTagResponse } from '@/lib/api'
+import { getErrorMessage } from '@/lib/utils/errorParser'
+import { isAddress } from 'viem'
 
 // interface WalletTag {
 //   address: string
@@ -37,9 +41,18 @@ export default function CuratorWalletTagging() {
   const [label, setLabel] = useState('')
   const [category, setCategory] = useState<string>('whale')
   const [stakeAmount, setStakeAmount] = useState('')
+  const [isTagging, setIsTagging] = useState(false)
+  const [walletAddressError, setWalletAddressError] = useState('')
+  const [recentTags, setRecentTags] = useState<WalletTagResponse[]>([])
+  const [backendStats, setBackendStats] = useState<{
+    totalTags: number
+    verifiedTags: number
+    accuracy: number
+  } | null>(null)
 
-  const { isConnected } = useAccount()
+  const { isConnected, address } = useAccount()
   const { stakingInfo, refetchStakingInfo } = useContractData()
+  const { setTransaction, updateTransactionStatus, clearTransaction } = useTransactionMonitor()
 
   const MIN_STAKE = 10000 // 10,000 FLOW tokens
 
@@ -48,20 +61,153 @@ export default function CuratorWalletTagging() {
     ? {
         isCurator: stakingInfo.isActive,
         stakedAmount: stakingInfo.stakedAmount,
-        totalTags: 0, // TODO: Fetch from backend
-        verifiedTags: 0, // TODO: Fetch from backend
-        accuracy: 0, // TODO: Calculate from backend data
+        totalTags: backendStats?.totalTags || 0,
+        verifiedTags: backendStats?.verifiedTags || 0,
+        accuracy: backendStats?.accuracy || 0,
       }
     : null
 
-  const handleTagWallet = () => {
-    // TODO: Implement wallet tagging logic
-    // 1. Verify user is a Curator (has staked >= 10,000 FLOW)
-    // 2. Submit tag to backend
-    // 3. Backend validates and stores tag
-    // 4. Community/algorithm can dispute tags
-    // 5. False tags result in slashing (5% of staked amount)
-    console.log('Tagging wallet:', { walletAddress, label, category })
+  // Fetch curator stats and recent tags when curator is active
+  useEffect(() => {
+    if (curatorStatus?.isCurator && address) {
+      const fetchCuratorData = async () => {
+        try {
+          // Fetch curator stats
+          const stats = await getCuratorStats(address)
+          
+          // Update backend stats
+          setBackendStats({
+            totalTags: stats.total_tags,
+            verifiedTags: stats.verified_tags,
+            accuracy: Math.round(stats.accuracy * 100) / 100, // Round to 2 decimal places
+          })
+          
+          // Fetch recent tags by this curator
+          const tagsData = await getWalletTags({
+            curator_address: address,
+            limit: 10,
+          })
+          
+          setRecentTags(tagsData.tags || [])
+        } catch (error) {
+          // Silently fail - backend might not be available
+          console.error('Failed to fetch curator data:', error)
+        }
+      }
+      
+      fetchCuratorData()
+    }
+  }, [curatorStatus?.isCurator, address])
+
+  // Validate wallet address format
+  const validateWalletAddress = (addr: string): boolean => {
+    if (!addr || addr.trim() === '') {
+      setWalletAddressError('Wallet address is required')
+      return false
+    }
+    
+    if (!isAddress(addr.trim())) {
+      setWalletAddressError('Invalid wallet address format')
+      return false
+    }
+    
+    setWalletAddressError('')
+    return true
+  }
+
+  const handleTagWallet = async () => {
+    // Validate inputs
+    if (!walletAddress || !label.trim()) {
+      return
+    }
+
+    // Validate wallet address format
+    if (!validateWalletAddress(walletAddress)) {
+      return
+    }
+
+    // Verify curator status
+    if (!curatorStatus?.isCurator || !address) {
+      const errorMsg = 'You must be an active Curator to tag wallets'
+      setTransaction({
+        id: `tag-error-${Date.now()}`,
+        status: 'error',
+        message: errorMsg,
+        type: 'other',
+      })
+      setTimeout(() => clearTransaction(), 5000)
+      return
+    }
+
+    setIsTagging(true)
+    
+    // Create transaction monitor entry
+    const transactionId = `tag-${Date.now()}`
+    setTransaction({
+      id: transactionId,
+      status: 'pending',
+      message: 'Creating wallet tag...',
+      type: 'other',
+    })
+
+    try {
+      // Submit tag to backend
+      const result = await createWalletTag({
+        wallet_address: walletAddress.trim(),
+        label: label.trim(),
+        category: category as 'exchange' | 'vc' | 'institution' | 'whale' | 'nft_collector' | 'other',
+        curator_address: address,
+      })
+
+      // Update transaction status to success
+      updateTransactionStatus(
+        transactionId,
+        'success',
+        `Wallet tagged successfully: ${result.tag.label}`,
+      )
+
+      // Clear form
+      setWalletAddress('')
+      setLabel('')
+      setCategory('whale')
+      setWalletAddressError('')
+
+      // Refresh recent tags and stats
+      try {
+        const tagsData = await getWalletTags({
+          curator_address: address,
+          limit: 10,
+        })
+        setRecentTags(tagsData.tags || [])
+        
+        // Refresh curator stats
+        const stats = await getCuratorStats(address)
+        setBackendStats({
+          totalTags: stats.total_tags,
+          verifiedTags: stats.verified_tags,
+          accuracy: Math.round(stats.accuracy * 100) / 100,
+        })
+      } catch (error) {
+        // Silently fail - tags will refresh on next mount
+        console.error('Failed to refresh tags:', error)
+      }
+
+      // Auto-clear success message after 5 seconds
+      setTimeout(() => clearTransaction(), 5000)
+    } catch (error) {
+      // Handle error
+      const errorMsg = getErrorMessage(error)
+      updateTransactionStatus(
+        transactionId,
+        'error',
+        errorMsg,
+      )
+      
+      // Auto-clear error message after 5 seconds
+      setTimeout(() => clearTransaction(), 5000)
+    } finally {
+      setIsTagging(false)
+    }
   }
 
   const handleStakeSuccess = () => {
@@ -170,10 +316,23 @@ export default function CuratorWalletTagging() {
           <input
             type="text"
             value={walletAddress}
-            onChange={(e) => setWalletAddress(e.target.value)}
-            className="w-full bg-midnight-blue border border-electric-cyan/30 rounded px-4 py-2 text-light-gray focus:outline-none focus:border-electric-cyan font-mono text-sm"
+            onChange={(e) => {
+              setWalletAddress(e.target.value)
+              if (walletAddressError) {
+                validateWalletAddress(e.target.value)
+              }
+            }}
+            onBlur={() => validateWalletAddress(walletAddress)}
+            className={`w-full bg-midnight-blue border rounded px-4 py-2 text-light-gray focus:outline-none font-mono text-sm ${
+              walletAddressError
+                ? 'border-sentinel-red focus:border-sentinel-red'
+                : 'border-electric-cyan/30 focus:border-electric-cyan'
+            }`}
             placeholder="0x..."
           />
+          {walletAddressError && (
+            <p className="text-sentinel-red text-sm mt-1">{walletAddressError}</p>
+          )}
         </div>
 
         <div>
@@ -210,9 +369,9 @@ export default function CuratorWalletTagging() {
                 onClick={handleTagWallet}
                 variant="default"
                 className="w-full"
-                disabled={!walletAddress || !label}
+                disabled={!walletAddress || !label || isTagging || !!walletAddressError}
               >
-                Tag Wallet
+                {isTagging ? 'Tagging...' : 'Tag Wallet'}
               </Button>
             </Tooltip.TooltipTrigger>
             <Tooltip.TooltipContent>
@@ -226,32 +385,40 @@ export default function CuratorWalletTagging() {
         </Tooltip.TooltipProvider>
       </div>
 
-      {/* Recent Tags - TODO: Implement when backend API is ready */}
-      {/* {recentTags.length > 0 && (
+      {/* Recent Tags */}
+      {recentTags.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold text-electric-cyan mb-4">
             Your Recent Tags
           </h3>
           <div className="space-y-2">
-            {recentTags.map((tag, index) => (
+            {recentTags.map((tag) => (
               <div
-                key={index}
+                key={tag.id}
                 className="bg-midnight-blue/30 border border-electric-cyan/20 rounded p-3 flex justify-between items-center"
               >
                 <div>
                   <p className="text-electric-cyan font-mono text-sm mb-1">
-                    {tag.address.slice(0, 10)}...{tag.address.slice(-8)}
+                    {tag.wallet_address.slice(0, 10)}...{tag.wallet_address.slice(-8)}
                   </p>
                   <p className="text-light-gray text-sm">{tag.label}</p>
+                  <p className="text-light-gray/60 text-xs mt-1 capitalize">{tag.category}</p>
                 </div>
-                <Badge variant={tag.verified ? 'default' : 'secondary'}>
-                  {tag.verified ? 'Verified' : 'Pending'}
-                </Badge>
+                <div className="flex flex-col items-end gap-2">
+                  <Badge variant={tag.verified ? 'default' : 'secondary'}>
+                    {tag.verified ? 'Verified' : 'Pending'}
+                  </Badge>
+                  {tag.dispute_count > 0 && (
+                    <Badge variant="secondary" className="text-xs">
+                      {tag.dispute_count} dispute{tag.dispute_count > 1 ? 's' : ''}
+                    </Badge>
+                  )}
+                </div>
               </div>
             ))}
           </div>
         </div>
-      )} */}
+      )}
     </div>
   )
 }
