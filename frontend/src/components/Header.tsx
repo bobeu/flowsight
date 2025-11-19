@@ -84,7 +84,7 @@ export default function Header() {
                   largeScreen: 'full',
                 }}
               />
-              <ConnectionStatus />
+              {/* <ConnectionStatus /> */}
               
               <Tooltip.Tooltip>
                 <Tooltip.TooltipTrigger asChild>
