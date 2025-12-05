@@ -2,6 +2,7 @@
 pragma solidity 0.8.30;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
@@ -21,6 +22,8 @@ import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 contract WhaleAlertBidding is Ownable, ReentrancyGuard, Pausable {
     /// @dev Reference to FLOW token contract
     IERC20 public immutable flowToken;
+    /// @dev Reference to FLOW token as burnable (for burning fees)
+    ERC20Burnable public immutable flowTokenBurnable;
     
     /// @dev Minimum bid amount (e.g., 100 FLOW)
     uint256 public constant MIN_BID = 100 * 10**18;
@@ -90,6 +93,7 @@ contract WhaleAlertBidding is Ownable, ReentrancyGuard, Pausable {
     constructor(address _flowToken, address initialOwner) Ownable(initialOwner) {
         require(_flowToken != address(0), "WhaleAlertBidding: Invalid token address");
         flowToken = IERC20(_flowToken);
+        flowTokenBurnable = ERC20Burnable(_flowToken);
     }
     
     /**
@@ -195,13 +199,8 @@ contract WhaleAlertBidding is Ownable, ReentrancyGuard, Pausable {
             "WhaleAlertBidding: Insufficient balance"
         );
         
-        // Burn tokens (transfer to address(0) or use burn function if available)
-        // Note: This assumes FLOWToken has burn functionality
-        // If not, tokens are sent to address(0) which effectively burns them
-        require(
-            flowToken.transfer(address(0), amount),
-            "WhaleAlertBidding: Burn failed"
-        );
+        // Burn tokens using ERC20Burnable functionality
+        flowTokenBurnable.burn(amount);
         
         totalBurned += amount;
         emit TokensBurned(amount);

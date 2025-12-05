@@ -31,7 +31,7 @@ describe("CuratorStaking", function () {
     const CuratorStakingFactory = await ethers.getContractFactory("CuratorStaking")
     const iface = CuratorStakingFactory.interface
     const functionFragment = iface.getFunction(functionName)
-    const functionSelector = functionFragment.selector
+    const functionSelector = functionFragment?.selector
     
     // Encode parameters only (without function selector)
     const coder = ethers.AbiCoder.defaultAbiCoder()
